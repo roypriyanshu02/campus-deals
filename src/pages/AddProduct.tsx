@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CATEGORIES } from '@/lib/dummy-data';
+import { CATEGORIES } from '@/lib/supabase';
+import { productService, userService } from '@/lib/api';
 import { ArrowLeft, Upload, Camera } from 'lucide-react';
 import { HeroButton } from '@/components/ui/button-variants';
 
@@ -25,12 +26,31 @@ const AddProduct = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      const currentUser = await userService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not logged in');
+      }
+
+      await productService.create({
+        title: formData.title,
+        category: formData.category,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        condition: formData.condition as 'new' | 'like-new' | 'good' | 'fair' | 'poor',
+        image: '/placeholder.svg', // TODO: Handle image upload
+        seller_id: currentUser.id,
+        seller_name: currentUser.name
+      });
+
       navigate('/my-listings');
-    }, 1500);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      // TODO: Show error toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -56,7 +76,7 @@ const AddProduct = () => {
           <CardHeader>
             <CardTitle>List Your Item</CardTitle>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Product Title */}
@@ -74,8 +94,8 @@ const AddProduct = () => {
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select 
-                  value={formData.category} 
+                <Select
+                  value={formData.category}
                   onValueChange={(value) => handleInputChange('category', value)}
                 >
                   <SelectTrigger>
@@ -94,8 +114,8 @@ const AddProduct = () => {
               {/* Condition */}
               <div className="space-y-2">
                 <Label htmlFor="condition">Condition *</Label>
-                <Select 
-                  value={formData.condition} 
+                <Select
+                  value={formData.condition}
                   onValueChange={(value) => handleInputChange('condition', value)}
                 >
                   <SelectTrigger>
@@ -162,8 +182,8 @@ const AddProduct = () => {
               </div>
 
               {/* Submit Button */}
-              <HeroButton 
-                type="submit" 
+              <HeroButton
+                type="submit"
                 className="w-full"
                 disabled={isSubmitting}
               >

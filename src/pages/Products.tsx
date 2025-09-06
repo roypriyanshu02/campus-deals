@@ -3,7 +3,9 @@ import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryButton, FABButton } from '@/components/ui/button-variants';
 import { Input } from '@/components/ui/input';
-import { dummyProducts, CATEGORIES } from '@/lib/dummy-data';
+import { productService } from '@/lib/api';
+import { CATEGORIES } from '@/lib/supabase';
+import type { Product } from '@/lib/supabase';
 import { Search, Plus, SlidersHorizontal, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProductGridSkeleton } from '@/components/ui/product-skeleton';
@@ -18,15 +20,21 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Function to handle refresh
   const handleRefresh = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    try {
+      const fetchedProducts = await productService.getAll();
+      setProducts(fetchedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Initialize pull-to-refresh
@@ -36,15 +44,12 @@ const Products = () => {
     containerRef
   });
 
-  // Simulate loading state
+  // Load products on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    handleRefresh();
   }, []);
 
-  const filteredProducts = dummyProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || product.category === selectedCategory;

@@ -1,4 +1,4 @@
-import { Product } from '@/lib/dummy-data';
+import { Product } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -106,23 +106,23 @@ export const ProductCard = ({ product, showActions, onEdit, onDelete }: ProductC
 
           <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mb-3">
             <span className="flex items-center gap-1">
-              � <span>{new Date(product.createdAt).toLocaleDateString()}</span>
+              📅 <span>{new Date(product.created_at).toLocaleDateString()}</span>
             </span>
           </div>
 
           <Link
-            to={`/seller/${product.sellerId}`}
+            to={`/seller/${product.seller_id}`}
             className="text-xs text-muted-foreground flex items-center gap-1.5 hover:text-primary transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="inline-block w-4 h-4 bg-muted rounded-full overflow-hidden" aria-hidden="true">
               <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.sellerId}`}
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.seller_id}`}
                 className="w-full h-full object-cover"
                 alt=""
               />
             </span>
-            <span aria-label={`Sold by ${product.sellerName}`}>{product.sellerName}</span>
+            <span aria-label={`Sold by ${product.seller_name}`}>{product.seller_name}</span>
           </Link>
         </div>
 

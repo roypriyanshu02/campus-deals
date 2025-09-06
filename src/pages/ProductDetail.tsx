@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { dummyProducts, dummyReviews } from '@/lib/dummy-data';
+import { productService, reviewService } from '@/lib/api';
+import type { Product, Review } from '@/lib/supabase';
 import { ArrowLeft, MessageCircle, Heart, Phone, Star, MapPin, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ImageCarousel } from '@/components/ui/image-carousel';
@@ -17,19 +18,37 @@ const ProductDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [sellerReviews, setSellerReviews] = useState<Review[]>([]);
 
-  const product = dummyProducts.find(p => p.id === id);
-  const sellerReviews = dummyReviews.filter(r => r.sellerId === product?.sellerId);
-
-  // Simulate loading state
+  // Load product and reviews
   useEffect(() => {
-    // Simulate network delay
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 700);
+    const loadData = async () => {
+      if (!id) return;
 
-    return () => clearTimeout(timer);
-  }, []);
+      try {
+        setIsLoading(true);
+        const [productData, reviewsData] = await Promise.all([
+          productService.getById(id),
+          // We'll get reviews once we have the product data
+          Promise.resolve([])
+        ]);
+
+        setProduct(productData);
+
+        if (productData) {
+          const reviews = await reviewService.getSellerReviews(productData.seller_id);
+          setSellerReviews(reviews);
+        }
+      } catch (error) {
+        console.error('Error loading product data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id]);
 
   if (isLoading) {
     return (
